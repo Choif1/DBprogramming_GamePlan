@@ -16,6 +16,7 @@ const allowedImageTypes = {
   'image/webp': '.webp',
   'image/gif': '.gif',
 };
+const allowedFeedbackSections = ['overview', 'gameplay', 'gamesystem', 'story', 'features'];
 
 const upload = multer({
   storage: multer.diskStorage({
@@ -258,6 +259,107 @@ router.put('/:id', authenticateToken, (req, res, next) => {
     await removeUploadedFile(req.file);
     console.error('기획서 수정 오류:', error.message);
     return res.status(500).json({ message: '기획서를 수정하지 못했습니다.' });
+  }
+});
+
+// 기획서 피드백 조회 (기획서 작성자는 섹션별로 조회 가능)
+// GET /api/projects/:id/feedbacks?section=overview
+router.get('/:id/feedbacks', async (req, res) => {
+  const projectId = Number(req.params.id);
+  const section = String(req.query.section || '');
+  if (!Number.isInteger(projectId) || projectId < 1) {
+    return res.status(400).json({ message: '올바른 기획서 번호가 아닙니다.' });
+  }
+  if (section && !allowedFeedbackSections.includes(section)) {
+    return res.status(400).json({ message: '올바른 피드백 섹션이 아닙니다.' });
+  }
+
+  try {
+    let query = `
+      SELECT f.id, f.project_id, f.user_id, f.section, f.content, f.created_at,
+             u.nickname AS author
+      FROM feedbacks AS f
+      JOIN users AS u ON u.id = f.user_id
+      WHERE f.project_id = ?
+    `;
+    const params = [projectId];
+    if (section) {
+      query += ' AND f.section = ?';
+      params.push(section);
+    }
+    query += ' ORDER BY f.created_at DESC, f.id DESC';
+
+    const [feedbacks] = await db.query(query, params);
+    return res.json(feedbacks);
+  } catch (error) {
+    console.error('피드백 조회 오류:', error.message);
+    return res.status(500).json({ message: '피드백을 불러오지 못했습니다.' });
+  }
+});
+
+// 로그인한 사용자의 섹션별 피드백 작성
+// POST /api/projects/:id/feedbacks
+router.post('/:id/feedbacks', authenticateToken, async (req, res) => {
+  const projectId = Number(req.params.id);
+  const section = String(req.body.section || '');
+  const content = String(req.body.content || '').trim();
+
+  if (!Number.isInteger(projectId) || projectId < 1) {
+    return res.status(400).json({ message: '올바른 기획서 번호가 아닙니다.' });
+  }
+  if (!allowedFeedbackSections.includes(section)) {
+    return res.status(400).json({ message: '피드백을 남길 섹션을 선택해 주세요.' });
+  }
+  if (!content) {
+    return res.status(400).json({ message: '피드백 내용을 입력해 주세요.' });
+  }
+
+  try {
+    const [projects] = await db.query('SELECT id FROM projects WHERE id = ? LIMIT 1', [projectId]);
+    if (projects.length === 0) {
+      return res.status(404).json({ message: '기획서를 찾을 수 없습니다.' });
+    }
+
+    const [result] = await db.query(
+      'INSERT INTO feedbacks (project_id, user_id, section, content) VALUES (?, ?, ?, ?)',
+      [projectId, req.user.id, section, content],
+    );
+    return res.status(201).json({ message: '피드백이 등록되었습니다.', feedbackId: result.insertId });
+  } catch (error) {
+    console.error('피드백 작성 오류:', error.message);
+    return res.status(500).json({ message: '피드백을 등록하지 못했습니다.' });
+  }
+});
+
+// 피드백 작성자 또는 기획서 작성자의 피드백 삭제
+// DELETE /api/projects/:id/feedbacks/:feedbackId
+router.delete('/:id/feedbacks/:feedbackId', authenticateToken, async (req, res) => {
+  const projectId = Number(req.params.id);
+  const feedbackId = Number(req.params.feedbackId);
+  if (!Number.isInteger(projectId) || projectId < 1 || !Number.isInteger(feedbackId) || feedbackId < 1) {
+    return res.status(400).json({ message: '올바르지 않은 기획서 또는 피드백 번호입니다.' });
+  }
+
+  try {
+    const [result] = await db.query(`
+      DELETE FROM feedbacks
+      WHERE id = ?
+        AND project_id = ?
+        AND (
+          user_id = ?
+          OR project_id IN (
+            SELECT id FROM projects WHERE id = ? AND user_id = ?
+          )
+        )
+    `, [feedbackId, projectId, req.user.id, projectId, req.user.id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: '피드백을 찾을 수 없거나 삭제 권한이 없습니다.' });
+    }
+    return res.json({ message: '피드백이 삭제되었습니다.' });
+  } catch (error) {
+    console.error('피드백 삭제 오류:', error.message);
+    return res.status(500).json({ message: '피드백을 삭제하지 못했습니다.' });
   }
 });
 
