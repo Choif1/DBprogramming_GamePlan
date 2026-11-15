@@ -3,12 +3,17 @@ import styled from 'styled-components';
 import Header from './components/Header';
 import Footer from './components/Footer';
 
-const Layout = () => {
+const Layout = ({ isLoggedIn, setIsLoggedIn, currentUser, setCurrentUser }) => {
   return (
     <PageWrapper>
-        <Header />
+        <Header
+          isLoggedIn={isLoggedIn}
+          setIsLoggedIn={setIsLoggedIn}
+          currentUser={currentUser}
+          setCurrentUser={setCurrentUser}
+        />
         <MainContent>
-            <Outlet />
+            <Outlet context={{ isLoggedIn, setIsLoggedIn, currentUser, setCurrentUser }} />
         </MainContent>
         <Footer />
     </PageWrapper>
@@ -16,13 +21,11 @@ const Layout = () => {
 };
 
 const PageWrapper = styled.div`
-  max-width: 600px;
-  margin: 0 auto;
+  width: 100%;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   background-color: #fff;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05); /* 모바일 뷰 구분용 연한 그림자 */
 `;
 
 const MainContent = styled.main`

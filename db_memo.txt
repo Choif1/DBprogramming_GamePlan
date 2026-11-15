@@ -1,0 +1,30 @@
+CREATE DATABASE gameplan_20412;
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    nickname VARCHAR(30) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE projects (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(100) NOT NULL,
+    genre VARCHAR(50) NOT NULL,
+    image VARCHAR(255) NULL,
+    overview TEXT NOT NULL,
+    gameplay TEXT NOT NULL,
+    gamesystem TEXT NOT NULL,
+    story TEXT NOT NULL,
+    features TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE
+);

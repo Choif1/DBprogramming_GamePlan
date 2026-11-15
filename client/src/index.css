@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&display=swap");
 
 * {
   margin:0;
@@ -20,5 +20,5 @@ table { width:100%; border-collapse:collapse; table-layout:fixed}
   text-indent:-9999px;
 }
 h1, h2, h3, h4, h5, h6 { font-size:100% }
-body { font-size:16px; font-family: "Nanum Gothic", sans-serif;}
+body { font-size:16px; font-family: "Noto Sans KR", sans-serif;}
 .row { max-width:1200px; margin:0 auto }

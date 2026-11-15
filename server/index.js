@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';                // 파일 및 폴더 경로를 안전하게 조작하는 Node.js 내장 모듈
 import { fileURLToPath } from 'url';    // URL 형식의 경로를 OS(윈도우, 리눅스, 맥)에 맞는 일반 파일 경로 형식으로 바꿔주는 함수
 import usersRouter from './routes/users.js';
-import productsRouter from './routes/products.js';
+import projectsRouter from './routes/projects.js';
 
 const __filename = fileURLToPath(import.meta.url);  // 현재 실행 중인 파일의 URL 경로를 가져와서 실제 운영체제에서 사용하는 절대 경로로 변환함
 const __dirname = path.dirname(__filename);         // 전체 파일 경로에서 파일 이름을 떼어내고, 파일이 속한 폴더(디렉터리)의 절대 경로만 추출하여 __dirname 변수에 저장
@@ -12,7 +12,7 @@ const __dirname = path.dirname(__filename);         // 전체 파일 경로에�
 // 환경변수 및 Express 앱 초기화
 dotenv.config();                                    // .env 파일에 저장된 설정값들을 process.env로 불러옵
 const app = express();
-const PORT = process.env.PORT;                      // .env 파일에 PORT 지정이 없으면 기본값 5000번 포트를 사용하도록 우선순위를 부여함
+const PORT = process.env.PORT || 5000;               // .env에 포트가 없으면 5000번 포트 사용
 
 // 미들웨어 설정                                                         : 클라이언트의 요청이 들어왔을 때 목적지로 가기 전, 중간에서 검사·번역·인증을 대신 처리하는 일을 함
 app.use(cors({ origin: 'http://localhost:5173', credentials: true }));  // 앱을 실제 운영 서버에 배포할 때는 Vite 개발 서버의 프록시 기능을 사용할 수 없으므로 실제 배포시 React(Vite 기본 포트 5173)에서의 API 요청 승인이 필요함
@@ -27,7 +27,7 @@ app.get('/', (req, res) => {
 
 // 라우터 등록
 app.use('/api/users', usersRouter);     // /api/users/login, /api/users/signup
-app.use('/api/products', productsRouter); // /api/products, /api/products/:id
+app.use('/api/projects', projectsRouter); // /api/projects
 
 // 서버 실행
 app.listen(PORT, () => {
